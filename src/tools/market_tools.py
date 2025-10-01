@@ -9,18 +9,8 @@ vector_store = get_vector_store()
 
 @tool
 def search_tech_information(technology: str, top_k: int = 3) -> List[Dict[str, Any]]:
-    """
-    기술 정보 검색 도구 (벡터 검색)
-
-    Args:
-        technology: 검색할 기술명 (예: "Python", "React", "AWS", "Docker")
-        top_k: 반환할 최대 결과 수
-
-    Returns:
-        해당 기술에 대한 정보와 트렌드
-    """
+    """기술 정보 검색 (예: Python, React, AWS)"""
     try:
-        # 기술 정보 카테고리에서 검색
         results = vector_store.search_by_category(
             query=f"{technology} 기술 특징 사용법 트렌드",
             category="tech_info",
@@ -49,18 +39,8 @@ def search_tech_information(technology: str, top_k: int = 3) -> List[Dict[str, A
 
 @tool
 def search_market_trends(query: str, top_k: int = 3) -> List[Dict[str, Any]]:
-    """
-    시장 트렌드 검색 도구 (벡터 검색)
-
-    Args:
-        query: 검색할 시장 트렌드 쿼리 (예: "개발자 시장", "AI 엔지니어 수요", "원격근무 트렌드")
-        top_k: 반환할 최대 결과 수
-
-    Returns:
-        관련 시장 트렌드 정보
-    """
+    """시장 트렌드 검색 (예: AI 엔지니어 수요, 원격근무 트렌드)"""
     try:
-        # 시장 트렌드 카테고리에서 검색
         results = vector_store.search_by_category(
             query=query,
             category="market_trends",
@@ -89,18 +69,8 @@ def search_market_trends(query: str, top_k: int = 3) -> List[Dict[str, Any]]:
 
 @tool
 def search_industry_analysis(industry: str, top_k: int = 3) -> List[Dict[str, Any]]:
-    """
-    산업 분석 정보 검색 도구 (벡터 검색)
-
-    Args:
-        industry: 검색할 산업 분야 (예: "핀테크", "이커머스", "게임", "AI")
-        top_k: 반환할 최대 결과 수
-
-    Returns:
-        해당 산업의 분석 정보
-    """
+    """산업 분석 정보 검색 (예: 핀테크, 이커머스, AI)"""
     try:
-        # 산업 분석 카테고리에서 검색
         results = vector_store.search_by_category(
             query=f"{industry} 산업 전망 동향 분석",
             category="industry_analysis",
@@ -129,18 +99,8 @@ def search_industry_analysis(industry: str, top_k: int = 3) -> List[Dict[str, An
 
 @tool
 def search_salary_information(position: str, top_k: int = 3) -> List[Dict[str, Any]]:
-    """
-    급여 정보 검색 도구 (벡터 검색)
-
-    Args:
-        position: 검색할 직무/포지션 (예: "개발자", "AI 엔지니어", "데이터 사이언티스트")
-        top_k: 반환할 최대 결과 수
-
-    Returns:
-        해당 포지션의 급여 정보
-    """
+    """급여 정보 검색 (예: AI 엔지니어, 데이터 사이언티스트)"""
     try:
-        # 급여 정보 카테고리에서 검색
         results = vector_store.search_by_category(
             query=f"{position} 연봉 급여 수준",
             category="salary_info",
@@ -169,18 +129,8 @@ def search_salary_information(position: str, top_k: int = 3) -> List[Dict[str, A
 
 @tool
 def general_knowledge_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
-    """
-    일반 지식 검색 도구 (벡터 검색)
-
-    Args:
-        query: 검색 쿼리 (자연어 질문 가능)
-        top_k: 반환할 최대 결과 수
-
-    Returns:
-        관련된 모든 카테고리의 정보
-    """
+    """일반 지식 검색 (자연어 질문 가능)"""
     try:
-        # 모든 카테고리에서 검색
         results = vector_store.search(query=query, top_k=top_k)
 
         if not results:
@@ -205,18 +155,8 @@ def general_knowledge_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]
 
 @tool
 def compare_technologies(tech1: str, tech2: str) -> Dict[str, Any]:
-    """
-    두 기술 비교 도구
-
-    Args:
-        tech1: 첫 번째 기술
-        tech2: 두 번째 기술
-
-    Returns:
-        두 기술의 비교 정보
-    """
+    """두 기술 비교 (예: React vs Vue)"""
     try:
-        # 각 기술 정보 검색
         tech1_info = vector_store.search_by_category(
             query=f"{tech1} 기술 특징",
             category="tech_info",
@@ -252,12 +192,7 @@ def compare_technologies(tech1: str, tech2: str) -> Dict[str, Any]:
 
 @tool
 def get_knowledge_base_stats() -> Dict[str, Any]:
-    """
-    지식 베이스 통계 정보 조회 도구
-
-    Returns:
-        지식 베이스의 문서 수, 카테고리별 분포 등 통계
-    """
+    """지식 베이스 통계 정보 조회"""
     try:
         stats = vector_store.get_stats()
 

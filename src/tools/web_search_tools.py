@@ -13,19 +13,8 @@ tavily_client = TavilyClient(api_key=os.getenv('TAVILY_API_KEY'))
 
 @tool
 def web_search_latest_trends(query: str, max_results: int = 3, include_domains: List[str] = None) -> List[Dict[str, Any]]:
-    """
-    최신 채용/개발자 트렌드 웹 검색 도구
-
-    Args:
-        query: 검색 쿼리 (예: "2024 개발자 채용 트렌드", "AI 엔지니어 시장 동향")
-        max_results: 최대 검색 결과 수
-        include_domains: 포함할 도메인 리스트 (선택사항)
-
-    Returns:
-        최신 웹 검색 결과
-    """
+    """최신 채용/개발자 트렌드 웹 검색"""
     try:
-        # Tavily 검색 실행
         search_params = {
             "query": query,
             "max_results": max_results,
@@ -38,7 +27,6 @@ def web_search_latest_trends(query: str, max_results: int = 3, include_domains: 
 
         results = tavily_client.search(**search_params)
 
-        # 결과 포맷팅
         formatted_results = []
         for result in results.get('results', []):
             formatted_results.append({
@@ -67,17 +55,7 @@ def web_search_latest_trends(query: str, max_results: int = 3, include_domains: 
 
 @tool
 def search_job_postings(position: str, location: str = "한국", max_results: int = 5) -> List[Dict[str, Any]]:
-    """
-    채용공고 검색 도구
-
-    Args:
-        position: 검색할 직무 (예: "Python 개발자", "프론트엔드 개발자")
-        location: 지역 (기본값: "한국")
-        max_results: 최대 검색 결과 수
-
-    Returns:
-        관련 채용공고 정보
-    """
+    """채용공고 검색"""
     try:
         query = f"{position} 채용 {location} 개발자 채용공고"
 
@@ -115,16 +93,7 @@ def search_job_postings(position: str, location: str = "한국", max_results: in
 
 @tool
 def search_company_information(company_name: str, max_results: int = 3) -> List[Dict[str, Any]]:
-    """
-    회사 정보 검색 도구
-
-    Args:
-        company_name: 검색할 회사명
-        max_results: 최대 검색 결과 수
-
-    Returns:
-        회사 정보 및 채용 현황
-    """
+    """회사 정보 검색"""
     try:
         query = f"{company_name} 회사 정보 채용 개발자 복리후생"
 
@@ -160,17 +129,7 @@ def search_company_information(company_name: str, max_results: int = 3) -> List[
 
 @tool
 def search_salary_benchmarks(position: str, location: str = "한국", max_results: int = 3) -> List[Dict[str, Any]]:
-    """
-    급여 벤치마크 웹 검색 도구
-
-    Args:
-        position: 직무명 (예: "시니어 개발자", "데이터 사이언티스트")
-        location: 지역 (기본값: "한국")
-        max_results: 최대 검색 결과 수
-
-    Returns:
-        최신 급여 벤치마크 정보
-    """
+    """급여 벤치마크 웹 검색"""
     try:
         query = f"{position} 연봉 급여 {location} 2024"
 
@@ -207,16 +166,7 @@ def search_salary_benchmarks(position: str, location: str = "한국", max_result
 
 @tool
 def search_tech_news(technology: str, max_results: int = 3) -> List[Dict[str, Any]]:
-    """
-    기술 관련 최신 뉴스 검색 도구
-
-    Args:
-        technology: 기술명 (예: "Python", "React", "AI", "블록체인")
-        max_results: 최대 검색 결과 수
-
-    Returns:
-        해당 기술의 최신 뉴스
-    """
+    """기술 관련 최신 뉴스 검색"""
     try:
         query = f"{technology} 기술 뉴스 트렌드 2024"
 
@@ -254,15 +204,7 @@ def search_tech_news(technology: str, max_results: int = 3) -> List[Dict[str, An
 
 @tool
 def search_startup_funding_news(max_results: int = 3) -> List[Dict[str, Any]]:
-    """
-    스타트업 투자 및 채용 뉴스 검색 도구
-
-    Args:
-        max_results: 최대 검색 결과 수
-
-    Returns:
-        스타트업 투자 및 채용 관련 최신 뉴스
-    """
+    """스타트업 투자 및 채용 뉴스 검색"""
     try:
         query = "스타트업 투자 채용 개발자 2024"
 
