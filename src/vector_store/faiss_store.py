@@ -108,8 +108,9 @@ class FAISSVectorStore:
         if not category_doc_ids:
             return []
 
-        # 전체 검색 후 필터링
-        all_results = self.search(query, top_k=top_k * 3)
+        # 전체 검색 후 필터링 (충분히 많이 검색)
+        search_k = max(len(self.documents), top_k * 5)
+        all_results = self.search(query, top_k=search_k)
         filtered_results = [
             r for r in all_results
             if r['id'] in category_doc_ids

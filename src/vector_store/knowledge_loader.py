@@ -36,7 +36,7 @@ def load_knowledge_file(file_path: Path, category: str) -> List[Dict[str, Any]]:
 
     return documents
 
-def initialize_knowledge_base(data_dir: str = "./data/knowledge"):
+def initialize_knowledge_base(data_dir: str = "./data/unstructured/knowledge"):
     """지식 베이스 초기화"""
     print("=" * 60)
     print("지식 베이스 초기화 시작")
