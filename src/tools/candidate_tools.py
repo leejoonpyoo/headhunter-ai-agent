@@ -12,16 +12,7 @@ def search_candidates_by_skills(
     skills: str,
     limit: int = 20
 ) -> Dict[str, Any]:
-    """
-    기술 스킬로 후보자 검색
-
-    Args:
-        skills: 기술 스킬 키워드 (예: "Python", "React", "AWS", "머신러닝")
-        limit: 최대 결과 수 (기본값: 20)
-
-    Returns:
-        해당 스킬을 가진 인재 목록
-    """
+    """기술 스킬로 후보자 검색 (예: Python, React, AWS)"""
     try:
         # positions 필드에서 스킬 검색
         talents = talent_repo.search_talents_by_position(skills)
@@ -44,16 +35,7 @@ def search_candidates_by_location(
     location: str,
     limit: int = 20
 ) -> Dict[str, Any]:
-    """
-    지역으로 후보자 검색
-
-    Args:
-        location: 지역 키워드 (예: "서울", "강남", "판교", "부산")
-        limit: 최대 결과 수 (기본값: 20)
-
-    Returns:
-        해당 지역의 인재 목록
-    """
+    """지역으로 후보자 검색 (예: 서울, 강남, 부산)"""
     try:
         # summary 필드에서 지역 정보 검색
         talents = talent_repo.search_talents_by_name(location)  # 임시로 이름 검색 사용
@@ -77,17 +59,7 @@ def search_candidates_by_salary_range(
     max_salary: int,
     limit: int = 20
 ) -> Dict[str, Any]:
-    """
-    희망 급여 범위로 후보자 검색
-
-    Args:
-        min_salary: 최소 연봉 (만원 단위, 예: 5000)
-        max_salary: 최대 연봉 (만원 단위, 예: 8000)
-        limit: 최대 결과 수 (기본값: 20)
-
-    Returns:
-        해당 급여 범위의 인재 목록
-    """
+    """급여 범위로 후보자 검색 (만원 단위, 예: 5000~8000)"""
     try:
         # 전체 인재 목록 가져오기 (실제로는 DB 쿼리 개선 필요)
         talents = talent_repo.get_all_talents(limit=100)
@@ -114,16 +86,7 @@ def search_candidates_by_work_type(
     work_type: str,
     limit: int = 20
 ) -> Dict[str, Any]:
-    """
-    근무 형태로 후보자 검색
-
-    Args:
-        work_type: 근무 형태 (예: "원격", "재택", "하이브리드", "사무실")
-        limit: 최대 결과 수 (기본값: 20)
-
-    Returns:
-        해당 근무 형태를 선호하는 인재 목록
-    """
+    """근무 형태로 후보자 검색 (예: 원격, 재택, 하이브리드)"""
     try:
         # summary에서 근무 형태 정보 검색
         talents = talent_repo.get_all_talents(limit=limit)
@@ -147,16 +110,7 @@ def search_candidates_by_industry(
     industry: str,
     limit: int = 20
 ) -> Dict[str, Any]:
-    """
-    산업 분야로 후보자 검색
-
-    Args:
-        industry: 산업 분야 (예: "Fintech", "E-commerce", "AI/ML", "게임")
-        limit: 최대 결과 수 (기본값: 20)
-
-    Returns:
-        해당 산업 경험이 있는 인재 목록
-    """
+    """산업 분야로 후보자 검색 (예: Fintech, E-commerce, AI/ML)"""
     try:
         talents = talent_repo.search_talents_by_position(industry)
 
@@ -179,16 +133,7 @@ def search_candidates_by_availability(
     availability: str = "즉시",
     limit: int = 20
 ) -> Dict[str, Any]:
-    """
-    입사 가능 시기로 후보자 검색
-
-    Args:
-        availability: 입사 가능 시기 (예: "즉시", "1개월 이내", "협의")
-        limit: 최대 결과 수 (기본값: 20)
-
-    Returns:
-        해당 시기에 입사 가능한 인재 목록
-    """
+    """입사 가능 시기로 후보자 검색 (예: 즉시, 1개월 이내)"""
     try:
         talents = talent_repo.get_all_talents(limit=limit)
 
@@ -215,20 +160,7 @@ def complex_candidate_search(
     work_type: Optional[str] = None,
     limit: int = 20
 ) -> Dict[str, Any]:
-    """
-    복합 조건으로 후보자 검색 (여러 조건 동시 적용)
-
-    Args:
-        skills: 기술 스킬 키워드 (선택)
-        location: 지역 (선택)
-        min_salary: 최소 연봉 만원 단위 (선택)
-        max_salary: 최대 연봉 만원 단위 (선택)
-        work_type: 근무 형태 (선택)
-        limit: 최대 결과 수 (기본값: 20)
-
-    Returns:
-        모든 조건을 만족하는 인재 목록
-    """
+    """복합 조건으로 후보자 검색 (스킬, 지역, 급여, 근무형태 등 동시 적용)"""
     try:
         # 조건 수집
         conditions = []
@@ -263,15 +195,7 @@ def complex_candidate_search(
 
 @tool
 def get_candidate_details(talent_id: int) -> Dict[str, Any]:
-    """
-    특정 후보자의 상세 정보 조회
-
-    Args:
-        talent_id: 인재 ID
-
-    Returns:
-        인재 상세 정보
-    """
+    """특정 후보자의 상세 정보 조회"""
     try:
         talent = talent_repo.get_talent_by_id(talent_id)
 
@@ -295,12 +219,7 @@ def get_candidate_details(talent_id: int) -> Dict[str, Any]:
 
 @tool
 def get_candidate_statistics() -> Dict[str, Any]:
-    """
-    전체 후보자 데이터베이스 통계 조회
-
-    Returns:
-        인재, 회사, 태그, 외부 데이터 통계
-    """
+    """전체 인재 데이터베이스 통계 조회"""
     try:
         stats = talent_repo.get_statistics()
 
@@ -319,16 +238,7 @@ def get_candidate_statistics() -> Dict[str, Any]:
 # 회사 검색 도구들
 @tool
 def search_companies_by_name(name: str, limit: int = 20) -> Dict[str, Any]:
-    """
-    회사 이름으로 검색
-
-    Args:
-        name: 검색할 회사 이름
-        limit: 최대 결과 수
-
-    Returns:
-        검색된 회사 리스트
-    """
+    """회사 이름으로 검색"""
     try:
         companies = talent_repo.search_companies_by_name(name)
 
@@ -347,16 +257,7 @@ def search_companies_by_name(name: str, limit: int = 20) -> Dict[str, Any]:
 
 @tool
 def search_companies_by_category(category: str, limit: int = 20) -> Dict[str, Any]:
-    """
-    업종으로 회사 검색
-
-    Args:
-        category: 업종 키워드
-        limit: 최대 결과 수
-
-    Returns:
-        해당 업종의 회사 리스트
-    """
+    """업종으로 회사 검색"""
     try:
         companies = talent_repo.search_companies_by_category(category)
 
