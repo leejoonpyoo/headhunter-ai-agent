@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.database.connection import get_engine, Base
 from src.database.models import Company, TalentProfile, ExpTag, CompanyExternalData
