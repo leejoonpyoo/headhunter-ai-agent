@@ -6,6 +6,12 @@ __pycache__/
 # C extensions
 *.so
 
+# Project specific ignores
+.env
+.claude/
+_backup/
+datas/
+
 # Distribution / packaging
 .Python
 build/

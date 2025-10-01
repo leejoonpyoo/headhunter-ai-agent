@@ -1,158 +1,100 @@
-"""SQLAlchemy 모델 정의 (정형 데이터만)"""
+"""SQLAlchemy Models - Real Data Schema"""
 
-from datetime import datetime, date
-from typing import List, Optional
-from sqlalchemy import Column, Integer, String, Date, Boolean, Text, DECIMAL, TIMESTAMP, ForeignKey, ARRAY
+from datetime import datetime
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 from .connection import Base
 
-class Candidate(Base):
-    """인재 기본 정보 모델"""
-    __tablename__ = "candidates"
+class Company(Base):
+    """Company information model"""
+    __tablename__ = "companies"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    email = Column(String(255), unique=True, index=True)
-    phone = Column(String(20))
-    age = Column(Integer)
-    location = Column(String(100), index=True)
-    status = Column(String(20), default='active', index=True)  # active, inactive, hired
-    created_at = Column(TIMESTAMP, default=func.now())
-    updated_at = Column(TIMESTAMP, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    name = Column(String(255), nullable=False, index=True)
+    innoforest_company_code = Column(String(100))
+    thevc_company_code = Column(String(100))
+    note = Column(Text)
+    business_number = Column(String(50))
+    business_category = Column(Text)
 
-    # 관계 설정
-    experiences = relationship("Experience", back_populates="candidate", cascade="all, delete-orphan")
-    skills = relationship("Skill", back_populates="candidate", cascade="all, delete-orphan")
-    education = relationship("Education", back_populates="candidate", cascade="all, delete-orphan")
-    preferences = relationship("Preference", back_populates="candidate", cascade="all, delete-orphan")
+    # Relationship
+    external_data = relationship("CompanyExternalData", back_populates="company")
 
     def to_dict(self):
-        """딕셔너리 변환"""
         return {
             'id': self.id,
             'name': self.name,
-            'email': self.email,
-            'phone': self.phone,
-            'age': self.age,
-            'location': self.location,
-            'status': self.status,
+            'innoforest_company_code': self.innoforest_company_code,
+            'thevc_company_code': self.thevc_company_code,
+            'business_number': self.business_number,
+            'business_category': self.business_category,
+            'note': self.note,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
-class Experience(Base):
-    """경력 정보 모델"""
-    __tablename__ = "experiences"
+class TalentProfile(Base):
+    """Talent profile model"""
+    __tablename__ = "talent_profiles"
 
     id = Column(Integer, primary_key=True, index=True)
-    candidate_id = Column(Integer, ForeignKey("candidates.id"), nullable=False)
-    company_name = Column(String(200))
-    position = Column(String(200))
-    start_date = Column(Date)
-    end_date = Column(Date)
-    is_current = Column(Boolean, default=False)
-    description = Column(Text)
-    industry = Column(String(100), index=True)
-    created_at = Column(TIMESTAMP, default=func.now())
-
-    # 관계 설정
-    candidate = relationship("Candidate", back_populates="experiences")
+    name = Column(String(255), nullable=False, index=True)
+    profile_url = Column(String(500))
+    summary = Column(Text)
+    positions = Column(Text)
 
     def to_dict(self):
         return {
             'id': self.id,
-            'candidate_id': self.candidate_id,
-            'company_name': self.company_name,
-            'position': self.position,
-            'start_date': self.start_date.isoformat() if self.start_date else None,
-            'end_date': self.end_date.isoformat() if self.end_date else None,
-            'is_current': self.is_current,
-            'description': self.description,
-            'industry': self.industry
+            'name': self.name,
+            'profile_url': self.profile_url,
+            'summary': self.summary,
+            'positions': self.positions
         }
 
-class Skill(Base):
-    """기술 스킬 모델"""
-    __tablename__ = "skills"
+class ExpTag(Base):
+    """Experience and skill tag model"""
+    __tablename__ = "exp_tags"
 
     id = Column(Integer, primary_key=True, index=True)
-    candidate_id = Column(Integer, ForeignKey("candidates.id"), nullable=False)
-    skill_name = Column(String(100), index=True)
-    proficiency_level = Column(String(20))  # beginner, intermediate, advanced, expert
-    years_of_experience = Column(DECIMAL(3, 1))
-    is_primary = Column(Boolean, default=False)
-    created_at = Column(TIMESTAMP, default=func.now())
-
-    # 관계 설정
-    candidate = relationship("Candidate", back_populates="skills")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    name = Column(String(255), nullable=False, index=True)
+    note = Column(Text)
 
     def to_dict(self):
         return {
             'id': self.id,
-            'candidate_id': self.candidate_id,
-            'skill_name': self.skill_name,
-            'proficiency_level': self.proficiency_level,
-            'years_of_experience': float(self.years_of_experience) if self.years_of_experience else None,
-            'is_primary': self.is_primary
+            'name': self.name,
+            'note': self.note,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
-class Education(Base):
-    """교육 배경 모델"""
-    __tablename__ = "education"
+class CompanyExternalData(Base):
+    """Company external platform data model"""
+    __tablename__ = "company_external_data"
 
     id = Column(Integer, primary_key=True, index=True)
-    candidate_id = Column(Integer, ForeignKey("candidates.id"), nullable=False)
-    institution = Column(String(200))
-    degree = Column(String(100))
-    major = Column(String(100))
-    graduation_date = Column(Date)
-    gpa = Column(DECIMAL(3, 2))
-    created_at = Column(TIMESTAMP, default=func.now())
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    result_data = Column(JSON)
+    note = Column(Text)
+    company_id = Column(Integer, ForeignKey("companies.id"), index=True)
+    platform_id = Column(Integer, index=True)
 
-    # 관계 설정
-    candidate = relationship("Candidate", back_populates="education")
+    # Relationship
+    company = relationship("Company", back_populates="external_data")
 
     def to_dict(self):
         return {
             'id': self.id,
-            'candidate_id': self.candidate_id,
-            'institution': self.institution,
-            'degree': self.degree,
-            'major': self.major,
-            'graduation_date': self.graduation_date.isoformat() if self.graduation_date else None,
-            'gpa': float(self.gpa) if self.gpa else None
-        }
-
-class Preference(Base):
-    """희망 조건 모델"""
-    __tablename__ = "preferences"
-
-    id = Column(Integer, primary_key=True, index=True)
-    candidate_id = Column(Integer, ForeignKey("candidates.id"), nullable=False)
-    desired_salary_min = Column(Integer)
-    desired_salary_max = Column(Integer)
-    work_type = Column(String(20), index=True)  # remote, hybrid, onsite
-    company_size = Column(String(50))  # startup, small, medium, large, enterprise
-    industry_preference = Column(ARRAY(Text))  # 배열로 여러 산업 저장
-    availability_status = Column(String(30))  # actively_looking, passively_looking, not_looking
-    available_from = Column(Date)
-    notice_period = Column(String(50))
-    created_at = Column(TIMESTAMP, default=func.now())
-
-    # 관계 설정
-    candidate = relationship("Candidate", back_populates="preferences")
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'candidate_id': self.candidate_id,
-            'desired_salary_min': self.desired_salary_min,
-            'desired_salary_max': self.desired_salary_max,
-            'work_type': self.work_type,
-            'company_size': self.company_size,
-            'industry_preference': self.industry_preference,
-            'availability_status': self.availability_status,
-            'available_from': self.available_from.isoformat() if self.available_from else None,
-            'notice_period': self.notice_period
+            'company_id': self.company_id,
+            'platform_id': self.platform_id,
+            'result_data': self.result_data,
+            'note': self.note,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

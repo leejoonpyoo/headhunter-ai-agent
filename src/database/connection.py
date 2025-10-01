@@ -61,7 +61,8 @@ class DatabaseConnection:
         try:
             if self.engine:
                 with self.engine.connect() as conn:
-                    conn.execute("SELECT 1")
+                    from sqlalchemy import text
+                    conn.execute(text("SELECT 1"))
                 self.is_connected = True
                 print("데이터베이스 연결 성공")
         except Exception as e:
