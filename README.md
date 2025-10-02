@@ -1,20 +1,20 @@
-# 🤖 Headhunter AI Agent
+# AI Headhunter Agent
 
-AI 기반 헤드헌터 어시스턴트 - 인재 검색부터 시장 분석까지
+> AI 기반 헤드헌터 어시스턴트 - 자체 풀에서 인재 검색부터 시장 분석까지!
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://www.python.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Latest-green.svg)](https://langchain-ai.github.io/langgraph/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Latest-red.svg)](https://streamlit.io/)
 
-## ✨ 주요 기능
+## 주요 기능
 
-### 🎯 완전한 ReAct Agent 구현
+### 완전한 `ReAct Agent` 구현
 - **추론 + 행동 패턴**: LangGraph 기반 고급 워크플로우
 - **20+ AI 도구**: 정형/비정형/실시간 데이터 통합
 - **대화 메모리**: 세션 기반 컨텍스트 유지
 - **스트리밍 응답**: 실시간 AI 응답 생성
 
-### 📊 3가지 데이터 소스 통합
+### 3가지 데이터 소스 통합
 1. **정형 데이터 (PostgreSQL)**
    - 인재 프로필 검색 (스킬, 지역, 급여)
    - 회사 정보 조회
@@ -27,16 +27,10 @@ AI 기반 헤드헌터 어시스턴트 - 인재 검색부터 시장 분석까지
 
 3. **실시간 데이터 (Tavily 웹 검색)**
    - 최신 채용 공고
-   - 기술 뉴스
+   - 기술 뉴스 
    - 회사 정보 업데이트
 
-### 💬 한글 최적화 UI
-- 직관적인 Streamlit 챗봇 인터페이스
-- 실시간 스트리밍 응답
-- 세션 관리 & 히스토리
-- 반응형 디자인
-
-## 🏗️ 아키텍처
+## 기본 아키텍처
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -55,7 +49,7 @@ AI 기반 헤드헌터 어시스턴트 - 인재 검색부터 시장 분석까지
 └────────────┘ └────────────┘ └───────────┘
 ```
 
-## 📁 프로젝트 구조
+## 프로젝트 구조
 
 ```
 headhunter-ai-agent/
@@ -122,53 +116,38 @@ git clone <repository-url>
 cd headhunter-ai-agent
 ```
 
-### 2. 가상환경 설정
+### 2. 패키지 & 가상환경 설정
 ```bash
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
+uv sync
+.venv\Scripts\activate
 
 # Mac/Linux
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
-### 3. 의존성 설치
-```bash
-pip install -r requirements.txt
-```
-
-### 4. PostgreSQL 시작
-```bash
-docker-compose up -d
-```
-
-### 5. 환경 변수 설정
+### 3. 환경 변수 설정
 ```bash
 cp .env.example .env
 ```
 
-`.env` 파일 편집:
-```env
-UPSTAGE_API_KEY=your_upstage_api_key_here
-TAVILY_API_KEY=your_tavily_api_key_here
-DB_URL=postgresql://headhunter_user:headhunter_pass@localhost:5432/headhunter_db
+`UPSTAGE_API_KEY` 값과 `TAVILY_API_KEY` 값 변경 필수
+
+### 4. PostgreSQL 시작
+```bash
+docker compose up -d
 ```
 
-### 6. 데이터 임포트
+### 5. 데이터 임포트
 ```bash
 python scripts/import_data.py
 ```
 
-### 7. AI 챗봇 실행 🎉
+### 6. AI 챗봇 실행 🎉
 
-**가장 간단한 방법** ⭐
 ```bash
 python run.py
-```
 
-또는 Windows에서:
-```bash
+# 또는 Windows에서
 run.bat
 ```
 
@@ -232,17 +211,6 @@ run.bat
 2. 무료 API 키 발급
 3. `.env`의 `TAVILY_API_KEY`에 입력
 
-## 🎨 주요 개선 사항
-
-### ✅ 이전 버전 대비 개선
-| 항목 | 이전 | 현재 |
-|-----|------|------|
-| **에이전트** | 기본 워크플로우 | ✨ ReAct 패턴 완전 구현 |
-| **UI** | 단순 검색 | ✨ 한글 챗봇 + 스트리밍 |
-| **도구** | 8개 기본 도구 | ✨ 20+ 고급 도구 |
-| **메모리** | 없음 | ✨ 세션 기반 대화 히스토리 |
-| **데이터 구조** | 혼재 | ✨ 정형/비정형 명확 분리 |
-| **실행** | 복잡 | ✨ 원클릭 실행 스크립트 |
 
 ## 🧪 테스트 쿼리 예시
 
@@ -281,57 +249,9 @@ run.bat
 ✅ "스타트업에서 시니어 Python 개발자 채용 전략"
 ```
 
-## 🐛 문제 해결
-
-### PostgreSQL 연결 오류
-```bash
-# 컨테이너 상태 확인
-docker-compose ps
-
-# 로그 확인
-docker-compose logs postgres
-
-# 재시작
-docker-compose restart postgres
-```
-
-### 임베딩 모델 다운로드 오류
-```bash
-# 수동 다운로드
-python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('jhgan/ko-sroberta-multitask')"
-```
-
-### Streamlit 실행 오류
-```bash
-# 환경 변수 확인
-python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(os.getenv('UPSTAGE_API_KEY'))"
-
-# 패키지 재설치
-pip install --upgrade -r requirements.txt
-```
-
 ## 📚 추가 자료
 
 - [LangGraph 공식 문서](https://langchain-ai.github.io/langgraph/)
 - [Upstage Solar LLM](https://console.upstage.ai/)
 - [Tavily API](https://tavily.com/)
 - [Streamlit 문서](https://docs.streamlit.io/)
-
-## 🤝 기여
-
-이슈와 PR을 환영합니다!
-
-## 📄 라이선스
-
-MIT License
-
-## 🙏 Acknowledgments
-
-- [LangChain](https://langchain.com/) - AI 애플리케이션 프레임워크
-- [Upstage](https://upstage.ai/) - Solar LLM 제공
-- [Tavily](https://tavily.com/) - 웹 검색 API
-- [Sentence Transformers](https://www.sbert.net/) - 무료 임베딩 모델
-
----
-
-Made with ❤️ by Headhunter AI Team
