@@ -150,7 +150,7 @@ with st.sidebar:
 
 
     # JD 업로드 섹션
-    st.markdown("#### 📄 JD 업로드 (선택사항)")
+    st.markdown("#### 📄 Internal Materials Upload (Optional)")
     uploaded_file = st.file_uploader(
         "PDF 파일을 업로드하세요",
         type=['pdf'],
@@ -238,73 +238,8 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # 회사 이름 검색 섹션
-    st.markdown("#### 🏢 회사 정보")
-    company_input = st.text_input(
-        "회사 이름",
-        value=st.session_state.company_name,
-        placeholder="회사 이름을 입력하세요",
-        help="검색할 회사 이름을 입력하세요.",
-        key="company_name_input"
-    )
-    
-    # 회사명이 변경되었을 때 처리
-    if company_input and company_input != st.session_state.company_name:
-        with st.spinner("🔍 회사명 검색 중..."):
-            try:
-                # Tavily 웹 검색으로 회사명 검증
-                from src.tools.web_search_tools import search_company_information
-                search_result = search_company_information(company_input)
-                
-                # 검색 결과에서 정확한 회사명 추출
-                if search_result and search_result.get("success"):
-                    company_info = search_result.get("company_info", [])
-                    if company_info:
-                        # 첫 번째 검색 결과의 제목에서 회사명 추출
-                        verified_name = company_input  # 기본값
-                        first_result = company_info[0]
-                        title = first_result.get("title", "")
-                        
-                        # 제목에서 회사명 추출 시도
-                        if company_input in title:
-                            verified_name = company_input
-                        else:
-                            # 제목에서 회사명 패턴 찾기
-                            import re
-                            patterns = [
-                                r'([가-힣A-Za-z0-9\s&]+(?:주식회사|㈜|\(주\)|Corp|Inc|Ltd))',
-                                r'([가-힣A-Za-z0-9\s&]+)(?:\s*채용|\s*모집|\s*개발자)'
-                            ]
-                            for pattern in patterns:
-                                match = re.search(pattern, title)
-                                if match:
-                                    verified_name = match.group(1).strip()
-                                    break
-                        
-                        st.session_state.company_name = verified_name
-                        st.success(f"✅ 회사명 검색 완료: **{verified_name}**")
-                        
-                        # 검색 결과 미리보기
-                        with st.expander("🔍 회사 정보 검색 결과"):
-                            st.write(f"**검색된 정보:** {len(company_info)}건")
-                            for i, info in enumerate(company_info[:3], 1):
-                                st.write(f"{i}. {info.get('title', '')}")
-                                st.caption(info.get('content', '')[:200] + "..." if len(info.get('content', '')) > 200 else info.get('content', ''))
-                    else:
-                        st.session_state.company_name = company_input
-                        st.warning(f"⚠️ '{company_input}'에 대한 검색 결과가 없습니다.")
-                else:
-                    st.session_state.company_name = company_input
-                    st.warning(f"⚠️ 회사명 검색에 실패했습니다. 입력한 이름을 그대로 사용합니다.")
-                    
-            except Exception as e:
-                st.session_state.company_name = company_input
-                st.error(f"❌ 회사명 검색 중 오류가 발생했습니다: {str(e)}")
-            
-            st.rerun()
-    
     # JD 텍스트 직접 입력
-    st.markdown("#### 📝 JD 직접 입력 (선택사항)")
+    st.markdown("#### 📝 JD Input (Optional)")
     jd_input = st.text_area(
         "JD 내용",
         value=st.session_state.jd_text,
