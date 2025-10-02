@@ -166,6 +166,14 @@ with st.sidebar:
                 if jd_text:
                     st.session_state.jd_text = jd_text
                     
+                    # 이미 처리된 파일인지 확인
+                    file_hash = hash(uploaded_file.getvalue())
+                    if hasattr(st.session_state, 'processed_file_hash') and st.session_state.processed_file_hash == file_hash:
+                        st.info("이미 처리된 파일입니다. 회사 정보는 이미 수집되었습니다.")
+                    else:
+                        # 파일 해시 저장
+                        st.session_state.processed_file_hash = file_hash
+                    
                     # 회사 이름 추출 및 검증 시도 (Solar API + Tavily)
                     with st.spinner("🤖 Solar API로 회사명을 추출하고 웹 검색으로 검증하는 중..."):
                         company_details = extract_company_name_with_details(jd_text)
@@ -176,6 +184,199 @@ with st.sidebar:
                         if company_name and company_name != "알 수 없음":
                             st.session_state.company_name = company_name
                             
+                            # 이미 이 회사의 정보가 수집되었는지 확인
+                            if hasattr(st.session_state, 'collected_companies') and company_name in st.session_state.collected_companies:
+                                st.info(f"'{company_name}'의 회사 정보는 이미 수집되었습니다.")
+                            else:
+                                # 추출 결과 표시
+                                confidence = company_details.get("confidence", "unknown")
+                                method = company_details.get("extraction_method", "unknown")
+                                verification_method = company_details.get("verification_method", "not_verified")
+                                
+                                # 신뢰도에 따른 아이콘과 색상
+                                if is_verified and confidence == "high":
+                                    st.success(f"✅ 회사명 검증 완료: **{company_name}** (웹 검색 검증됨)")
+                                    if original_name and original_name != company_name:
+                                        st.info(f"📝 원본 추출: {original_name} → 최종 확인: {company_name}")
+                                elif confidence == "high":
+                                    st.success(f"✅ 회사명 자동 추출: **{company_name}** (신뢰도: 높음)")
+                                elif confidence == "medium":
+                                    st.info(f"ℹ️ 회사명 자동 추출: **{company_name}** (신뢰도: 보통)")
+                                else:
+                                    st.warning(f"⚠️ 회사명 자동 추출: **{company_name}** (신뢰도: 낮음)")
+                                
+                                # 추출 및 검증 방법 표시
+                                method_map = {
+                                    "explicit": "명시적 추출",
+                                    "inferred": "추론적 추출", 
+                                    "not_found": "찾을 수 없음",
+                                    "web_search_verified": "웹 검색 검증됨",
+                                    "web_search_partial": "웹 검색 부분 확인",
+                                    "not_verified": "검증되지 않음"
+                                }
+                                
+                                st.caption(f"추출 방법: {method_map.get(method, method)}")
+                                if verification_method != "not_verified":
+                                    st.caption(f"검증 방법: {method_map.get(verification_method, verification_method)}")
+                                
+                                # 분석 결과 표시 (있는 경우)
+                                if "analysis" in company_details:
+                                    with st.expander("🔍 회사명 검증 분석 결과"):
+                                        st.text(company_details["analysis"])
+                            
+                                # 회사 정보 수집 및 벡터화
+                                with st.spinner(f"🔍 {company_name} 회사 정보를 수집하고 벡터 DB에 저장하는 중..."):
+                                    try:
+                                        from src.tools.web_search_tools import search_company_comprehensive_info
+                                        from src.vector_store.faiss_store import get_vector_store
+                                        
+                                        # 검색 키워드 정의
+                                        search_keywords = [
+                                            f"{company_name} 회사 역사",
+                                            f"{company_name} 회사 소개", 
+                                            f"{company_name} 채용 후기",
+                                            f"{company_name} 직원 인터뷰",
+                                            f"{company_name} 기술 스택",
+                                            f"{company_name} 개발 환경",
+                                            f"{company_name} 복리후생",
+                                            f"{company_name} 연봉",
+                                            f"{company_name} 뉴스",
+                                            f"{company_name} 보도자료"
+                                        ]
+                                        
+                                        # 진행 상태 표시용 컨테이너
+                                        progress_container = st.container()
+                                        
+                                        # 각 키워드별 검색 진행
+                                        all_search_results = []
+                                        total_count = 0
+                                        
+                                        for i, keyword in enumerate(search_keywords):
+                                            # 검색 중 상태 표시
+                                            with progress_container:
+                                                st.info(f"🟢 {keyword}을 검색하는 중...")
+                                            
+                                            try:
+                                                # 개별 키워드 검색
+                                                search_params = {
+                                                    "query": keyword,
+                                                    "max_results": 30,
+                                                    "search_depth": "advanced"
+                                                }
+                                                
+                                                from src.tools.web_search_tools import _tavily_search_and_format
+                                                search_result = _tavily_search_and_format(search_params)
+                                                formatted_results = search_result.get("results", [])
+                                                
+                                                if formatted_results:
+                                                    all_search_results.append({
+                                                        "keyword": keyword,
+                                                        "results": formatted_results
+                                                    })
+                                                    total_count += len(formatted_results)
+                                                
+                                                # 검색 완료 상태 표시
+                                                with progress_container:
+                                                    st.success(f"🔵 {keyword} 검색 완료 ({len(formatted_results)}건)")
+                                                    
+                                            except Exception as e:
+                                                with progress_container:
+                                                    st.error(f"❌ {keyword} 검색 실패: {str(e)}")
+                                                continue
+                                        
+                                        if all_search_results:
+                                            # 벡터 스토어에 추가
+                                            vector_store = get_vector_store()
+                                            vector_store.add_company_info(company_name, all_search_results)
+                                            
+                                            st.success(f"📚 {company_name} 회사 정보 {total_count}건을 벡터 DB에 저장했습니다.")
+                                            
+                                            # 수집된 회사 목록에 추가
+                                            if not hasattr(st.session_state, 'collected_companies'):
+                                                st.session_state.collected_companies = set()
+                                            st.session_state.collected_companies.add(company_name)
+                                            
+                                            # 수집된 정보 미리보기
+                                            with st.expander(f"📋 {company_name} 수집 정보 미리보기"):
+                                                for result in all_search_results[:3]:  # 처음 3개만 표시
+                                                    keyword = result.get('keyword', '')
+                                                    results = result.get('results', [])
+                                                    st.write(f"**{keyword}**: {len(results)}건")
+                                                    for item in results[:1]:  # 각 키워드당 1개만 표시
+                                                        st.caption(f"- {item.get('title', '')[:100]}...")
+                                        else:
+                                            st.warning(f"⚠️ {company_name}에 대한 검색 결과가 없습니다.")
+                                        
+                                        # 진행 상태 컨테이너 초기화 (모든 메시지 삭제)
+                                        progress_container.empty()
+                                            
+                                    except Exception as e:
+                                        st.error(f"❌ 회사 정보 수집 중 오류: {str(e)}")
+                            
+                        else:
+                            st.warning("⚠️ 회사명을 자동으로 추출할 수 없습니다.")
+                            if "error" in company_details:
+                                st.caption(f"오류: {company_details['error']}")
+                            if "verification_error" in company_details:
+                                st.caption(f"검증 오류: {company_details['verification_error']}")
+                    
+                    # JD 미리보기
+                    with st.expander("📋 JD 미리보기"):
+                        st.text_area("JD 내용", jd_text, height=200, disabled=True)
+                else:
+                    st.error("❌ PDF 파싱에 실패했습니다.")
+                    st.info("💡 **해결 방법:**\n"
+                           "- PDF가 텍스트 기반인지 확인하세요\n"
+                           "- 이미지로 스캔된 PDF는 OCR이 필요합니다\n"
+                           "- 다른 PDF 파일로 시도해보세요\n"
+                           "- JD 내용을 직접 입력해보세요")
+            except Exception as e:
+                st.error(f"❌ PDF 처리 중 오류가 발생했습니다: {str(e)}")
+                st.info("💡 **해결 방법:**\n"
+                       "- PDF 파일이 손상되지 않았는지 확인하세요\n"
+                       "- 파일 크기가 200MB 이하인지 확인하세요\n"
+                       "- JD 내용을 직접 입력해보세요")
+    
+    st.markdown("---")
+    
+    # JD 텍스트 직접 입력
+    st.markdown("#### 📝 Internal Text Upload (Optional)")
+    jd_input = st.text_area(
+        "JD 내용",
+        value=st.session_state.jd_text,
+        height=150,
+        placeholder="JD 내용을 직접 입력하세요...",
+        help="PDF 업로드 대신 JD 내용을 직접 입력할 수 있습니다."
+    )
+    
+    if jd_input != st.session_state.jd_text:
+        st.session_state.jd_text = jd_input
+
+    # JD 입력 처리 버튼
+    if st.button("📝 입력", use_container_width=True, help="입력한 JD 내용에서 회사명을 추출하고 회사 정보를 수집합니다."):
+        if jd_input and jd_input.strip():
+            # 이미 처리된 텍스트인지 확인
+            text_hash = hash(jd_input.strip())
+            if hasattr(st.session_state, 'processed_text_hash') and st.session_state.processed_text_hash == text_hash:
+                st.info("이미 처리된 JD 내용입니다. 회사 정보는 이미 수집되었습니다.")
+            else:
+                # 텍스트 해시 저장
+                st.session_state.processed_text_hash = text_hash
+                
+                # 회사 이름 추출 및 검증 시도 (Solar API + Tavily)
+                with st.spinner("🤖 Solar API로 회사명을 추출하고 웹 검색으로 검증하는 중..."):
+                    company_details = extract_company_name_with_details(jd_input)
+                    company_name = company_details.get("company_name")
+                    original_name = company_details.get("original_extraction")
+                    is_verified = company_details.get("is_verified", False)
+                    
+                    if company_name and company_name != "알 수 없음":
+                        st.session_state.company_name = company_name
+                        
+                        # 이미 이 회사의 정보가 수집되었는지 확인
+                        if hasattr(st.session_state, 'collected_companies') and company_name in st.session_state.collected_companies:
+                            st.info(f"'{company_name}'의 회사 정보는 이미 수집되었습니다.")
+                        else:
                             # 추출 결과 표시
                             confidence = company_details.get("confidence", "unknown")
                             method = company_details.get("extraction_method", "unknown")
@@ -212,44 +413,102 @@ with st.sidebar:
                                 with st.expander("🔍 회사명 검증 분석 결과"):
                                     st.text(company_details["analysis"])
                             
-                        else:
-                            st.warning("⚠️ 회사명을 자동으로 추출할 수 없습니다.")
-                            if "error" in company_details:
-                                st.caption(f"오류: {company_details['error']}")
-                            if "verification_error" in company_details:
-                                st.caption(f"검증 오류: {company_details['verification_error']}")
-                    
-                    # JD 미리보기
-                    with st.expander("📋 JD 미리보기"):
-                        st.text_area("JD 내용", jd_text, height=200, disabled=True)
-                else:
-                    st.error("❌ PDF 파싱에 실패했습니다.")
-                    st.info("💡 **해결 방법:**\n"
-                           "- PDF가 텍스트 기반인지 확인하세요\n"
-                           "- 이미지로 스캔된 PDF는 OCR이 필요합니다\n"
-                           "- 다른 PDF 파일로 시도해보세요\n"
-                           "- JD 내용을 직접 입력해보세요")
-            except Exception as e:
-                st.error(f"❌ PDF 처리 중 오류가 발생했습니다: {str(e)}")
-                st.info("💡 **해결 방법:**\n"
-                       "- PDF 파일이 손상되지 않았는지 확인하세요\n"
-                       "- 파일 크기가 200MB 이하인지 확인하세요\n"
-                       "- JD 내용을 직접 입력해보세요")
-    
-    st.markdown("---")
-    
-    # JD 텍스트 직접 입력
-    st.markdown("#### 📝 JD Input (Optional)")
-    jd_input = st.text_area(
-        "JD 내용",
-        value=st.session_state.jd_text,
-        height=150,
-        placeholder="JD 내용을 직접 입력하세요...",
-        help="PDF 업로드 대신 JD 내용을 직접 입력할 수 있습니다."
-    )
-    
-    if jd_input != st.session_state.jd_text:
-        st.session_state.jd_text = jd_input
+                            # 회사 정보 수집 및 벡터화
+                            with st.spinner(f"🔍 {company_name} 회사 정보를 수집하고 벡터 DB에 저장하는 중..."):
+                                try:
+                                    from src.tools.web_search_tools import search_company_comprehensive_info
+                                    from src.vector_store.faiss_store import get_vector_store
+                                    
+                                    # 검색 키워드 정의
+                                    search_keywords = [
+                                        f"{company_name} 회사 역사",
+                                        f"{company_name} 회사 소개", 
+                                        f"{company_name} 채용 후기",
+                                        f"{company_name} 직원 인터뷰",
+                                        f"{company_name} 기술 스택",
+                                        f"{company_name} 개발 환경",
+                                        f"{company_name} 복리후생",
+                                        f"{company_name} 연봉",
+                                        f"{company_name} 뉴스",
+                                        f"{company_name} 보도자료"
+                                    ]
+                                    
+                                    # 진행 상태 표시용 컨테이너
+                                    progress_container = st.container()
+                                    
+                                    # 각 키워드별 검색 진행
+                                    all_search_results = []
+                                    total_count = 0
+                                    
+                                    for i, keyword in enumerate(search_keywords):
+                                        # 검색 중 상태 표시
+                                        with progress_container:
+                                            st.info(f"🟢 {keyword}을 검색하는 중...")
+                                        
+                                        try:
+                                            # 개별 키워드 검색
+                                            search_params = {
+                                                "query": keyword,
+                                                "max_results": 30,
+                                                "search_depth": "advanced"
+                                            }
+                                            
+                                            from src.tools.web_search_tools import _tavily_search_and_format
+                                            search_result = _tavily_search_and_format(search_params)
+                                            formatted_results = search_result.get("results", [])
+                                            
+                                            if formatted_results:
+                                                all_search_results.append({
+                                                    "keyword": keyword,
+                                                    "results": formatted_results
+                                                })
+                                                total_count += len(formatted_results)
+                                            
+                                            # 검색 완료 상태 표시
+                                            with progress_container:
+                                                st.success(f"🔵 {keyword} 검색 완료 ({len(formatted_results)}건)")
+                                                
+                                        except Exception as e:
+                                            with progress_container:
+                                                st.error(f"❌ {keyword} 검색 실패: {str(e)}")
+                                            continue
+                                    
+                                    if all_search_results:
+                                        # 벡터 스토어에 추가
+                                        vector_store = get_vector_store()
+                                        vector_store.add_company_info(company_name, all_search_results)
+                                        
+                                        st.success(f"📚 {company_name} 회사 정보 {total_count}건을 벡터 DB에 저장했습니다.")
+                                        
+                                        # 수집된 회사 목록에 추가
+                                        if not hasattr(st.session_state, 'collected_companies'):
+                                            st.session_state.collected_companies = set()
+                                        st.session_state.collected_companies.add(company_name)
+                                        
+                                        # 수집된 정보 미리보기
+                                        with st.expander(f"📋 {company_name} 수집 정보 미리보기"):
+                                            for result in all_search_results[:3]:  # 처음 3개만 표시
+                                                keyword = result.get('keyword', '')
+                                                results = result.get('results', [])
+                                                st.write(f"**{keyword}**: {len(results)}건")
+                                                for item in results[:1]:  # 각 키워드당 1개만 표시
+                                                    st.caption(f"- {item.get('title', '')[:100]}...")
+                                    else:
+                                        st.warning(f"⚠️ {company_name}에 대한 검색 결과가 없습니다.")
+                                    
+                                    # 진행 상태 컨테이너 초기화 (모든 메시지 삭제)
+                                    progress_container.empty()
+                                        
+                                except Exception as e:
+                                    st.error(f"❌ 회사 정보 수집 중 오류: {str(e)}")
+                    else:
+                        st.warning("⚠️ 회사명을 자동으로 추출할 수 없습니다.")
+                        if "error" in company_details:
+                            st.caption(f"오류: {company_details['error']}")
+                        if "verification_error" in company_details:
+                            st.caption(f"검증 오류: {company_details['verification_error']}")
+        else:
+            st.warning("⚠️ JD 내용을 입력해주세요.")
 
     st.markdown("---")
 

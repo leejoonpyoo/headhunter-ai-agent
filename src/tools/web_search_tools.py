@@ -346,6 +346,92 @@ def search_tech_news(
         }
 
 @tool(parse_docstring=True)
+def search_company_comprehensive_info(
+    company_name: str,
+    max_results_per_keyword: int = 3
+) -> Dict[str, Any]:
+    """특정 회사에 대한 포괄적인 정보를 다양한 키워드로 검색합니다.
+
+    회사의 역사, 채용 후기, 기술 스택, 복리후생, 뉴스 등 다양한 관점에서
+    정보를 수집하여 벡터 스토어에 저장할 수 있는 형태로 제공합니다.
+    
+    사용 시점: JD에서 회사명을 추출한 후 해당 회사의 상세 정보를 수집할 때,
+    회사별 맞춤형 정보를 벡터 DB에 저장할 때,
+    채용 상담 시 회사에 대한 종합적인 정보가 필요할 때 사용합니다.
+
+    Args:
+        company_name: 검색할 회사명. 예: "비바리퍼블리카", "토스", "카카오"
+        max_results_per_keyword: 키워드당 최대 검색 결과 수. 기본값 3
+
+    Returns:
+        회사 정보 검색 결과 딕셔너리. success(bool), company(str), 
+        total_count(int), search_results(List[Dict]), message(str) 포함.
+        각 search_result는 keyword, results(List[Dict]) 포함.
+
+    Raises:
+        Exception: 회사 정보 검색 실패 시
+
+    Examples:
+        >>> info = search_company_comprehensive_info("비바리퍼블리카")
+        >>> for result in info['search_results']:
+        ...     print(f"{result['keyword']}: {len(result['results'])}건")
+    """
+    try:
+        # 회사별 검색 키워드 정의
+        search_keywords = [
+            f"{company_name} 회사 역사",
+            f"{company_name} 회사 소개", 
+            f"{company_name} 채용 후기",
+            f"{company_name} 직원 인터뷰",
+            f"{company_name} 기술 스택",
+            f"{company_name} 개발 환경",
+            f"{company_name} 복리후생",
+            f"{company_name} 연봉",
+            f"{company_name} 뉴스",
+            f"{company_name} 보도자료"
+        ]
+        
+        all_search_results = []
+        total_count = 0
+        
+        for keyword in search_keywords:
+            try:
+                search_params = {
+                    "query": keyword,
+                    "max_results": max_results_per_keyword,
+                    "search_depth": "advanced"
+                }
+                
+                search_result = _tavily_search_and_format(search_params)
+                formatted_results = search_result.get("results", [])
+                
+                if formatted_results:
+                    all_search_results.append({
+                        "keyword": keyword,
+                        "results": formatted_results
+                    })
+                    total_count += len(formatted_results)
+                    
+            except Exception as e:
+                print(f"키워드 '{keyword}' 검색 실패: {e}")
+                continue
+        
+        return {
+            "success": True,
+            "company": company_name,
+            "total_count": total_count,
+            "search_results": all_search_results,
+            "message": f"'{company_name}'에 대한 포괄적인 정보 {total_count}건을 수집했습니다."
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "회사 포괄 정보 검색 중 오류가 발생했습니다."
+        }
+
+@tool(parse_docstring=True)
 def search_startup_funding_news(
     max_results: int = 3
 ) -> Dict[str, Any]:

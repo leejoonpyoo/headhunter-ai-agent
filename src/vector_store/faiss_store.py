@@ -77,6 +77,43 @@ class FAISSVectorStore:
 
         print(f"{len(texts)}개 문서 추가 완료 (총 {len(self.documents)}개)")
 
+    def add_company_info(self, company_name: str, search_results: List[Dict[str, Any]]):
+        """회사 정보를 벡터 스토어에 추가"""
+        texts = []
+        metadata = []
+        
+        for search_result in search_results:
+            keyword = search_result.get('keyword', '')
+            results = search_result.get('results', [])
+            
+            for result in results:
+                # 텍스트 조합 (제목 + 내용)
+                text = f"제목: {result.get('title', '')}\n내용: {result.get('content', '')}"
+                texts.append(text)
+                
+                # 메타데이터 구성
+                meta = {
+                    'category': 'company_info',
+                    'company_name': company_name,
+                    'keyword': keyword,
+                    'title': result.get('title', ''),
+                    'url': result.get('url', ''),
+                    'score': result.get('score', 0),
+                    'source': 'tavily_search'
+                }
+                
+                # 발행일이 있으면 추가
+                if 'published_date' in result:
+                    meta['published_date'] = result['published_date']
+                    
+                metadata.append(meta)
+        
+        if texts:
+            self.add_documents(texts, metadata)
+            print(f"'{company_name}' 회사 정보 {len(texts)}건을 벡터 스토어에 추가했습니다.")
+        else:
+            print(f"'{company_name}'에 대한 검색 결과가 없어 벡터 스토어에 추가하지 않았습니다.")
+
     def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """벡터 검색"""
         if self.index.ntotal == 0:
