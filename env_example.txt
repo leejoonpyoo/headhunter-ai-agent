@@ -1,0 +1,16 @@
+# 환경 변수 설정 예시
+# .env 파일을 생성하고 아래 내용을 추가하세요
+
+# Solar Pro 2 API Key (Upstage)
+UPSTAGE_API_KEY=your_solar_api_key_here
+
+# Tavily API Key (Web Search)
+TAVILY_API_KEY=your_tavily_api_key_here
+
+# PostgreSQL Database (기존)
+DATABASE_URL=postgresql://username:password@localhost:5432/headhunter_db
+
+# 사용 방법:
+# 1. 이 파일을 .env로 복사
+# 2. API 키들을 실제 값으로 교체
+# 3. Streamlit 앱 실행
