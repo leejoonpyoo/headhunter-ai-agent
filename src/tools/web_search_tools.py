@@ -16,6 +16,29 @@ load_dotenv()
 # Tavily 클라이언트 초기화
 tavily_client = TavilyClient(api_key=os.getenv('TAVILY_API_KEY'))
 
+def _tavily_search_and_format(search_params: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Tavily 검색을 수행하고 결과를 공통 형식으로 포맷합니다."""
+    results = tavily_client.search(**search_params)
+    
+    formatted_results = []
+    for result in results.get("results", []):
+        item = {
+            "title": result.get('title', ''),
+            "content": result.get('content', ''),
+            "url": result.get('url', ''),
+            "score": result.get('score', 0)
+        }
+        # published_date가 있는 경우에만 추가
+        if published_date := result.get('published_date'):
+            item['published_date'] = published_date
+        formatted_results.append(item)
+
+    # 'answer' 키가 있는 경우 결과에 포함
+    if 'answer' in results and results['answer']:
+        return {"answer": results['answer'], "results": formatted_results}
+        
+    return {"results": formatted_results}
+
 @tool(parse_docstring=True)
 def web_search_latest_trends(
     query: str, 
@@ -62,24 +85,16 @@ def web_search_latest_trends(
         if include_domains:
             search_params["include_domains"] = include_domains
 
-        results = tavily_client.search(**search_params)
-
-        formatted_results = []
-        for result in results.get('results', []):
-            formatted_results.append({
-                "title": result.get('title', ''),
-                "content": result.get('content', ''),
-                "url": result.get('url', ''),
-                "score": result.get('score', 0),
-                "published_date": result.get('published_date', '')
-            })
+        search_result = _tavily_search_and_format(search_params)
+        formatted_results = search_result.get("results", [])
+        answer = search_result.get("answer", "")
 
         return {
             "success": True,
             "query": query,
             "count": len(formatted_results),
             "results": formatted_results,
-            "answer": results.get('answer', ''),
+            "answer": answer,
             "message": f"'{query}'에 대한 최신 웹 검색 결과 {len(formatted_results)}건을 찾았습니다."
         }
 
@@ -127,21 +142,14 @@ def search_job_postings(
     try:
         query = f"{position} 채용 {location} 개발자 채용공고"
 
-        results = tavily_client.search(
-            query=query,
-            max_results=max_results,
-            search_depth="advanced",
-            include_domains=["saramin.co.kr", "jobkorea.co.kr", "wanted.co.kr", "programmers.co.kr"]
-        )
-
-        formatted_results = []
-        for result in results.get('results', []):
-            formatted_results.append({
-                "title": result.get('title', ''),
-                "content": result.get('content', ''),
-                "url": result.get('url', ''),
-                "score": result.get('score', 0)
-            })
+        search_params = {
+            "query": query,
+            "max_results": max_results,
+            "search_depth": "advanced",
+            "include_domains": ["saramin.co.kr", "jobkorea.co.kr", "wanted.co.kr", "programmers.co.kr"]
+        }
+        search_result = _tavily_search_and_format(search_params)
+        formatted_results = search_result.get("results", [])
 
         return {
             "success": True,
@@ -194,20 +202,13 @@ def search_company_information(
     try:
         query = f"{company_name} 회사 정보 채용 개발자 복리후생"
 
-        results = tavily_client.search(
-            query=query,
-            max_results=max_results,
-            search_depth="advanced"
-        )
-
-        formatted_results = []
-        for result in results.get('results', []):
-            formatted_results.append({
-                "title": result.get('title', ''),
-                "content": result.get('content', ''),
-                "url": result.get('url', ''),
-                "score": result.get('score', 0)
-            })
+        search_params = {
+            "query": query,
+            "max_results": max_results,
+            "search_depth": "advanced"
+        }
+        search_result = _tavily_search_and_format(search_params)
+        formatted_results = search_result.get("results", [])
 
         return {
             "success": True,
@@ -261,20 +262,13 @@ def search_salary_benchmarks(
     try:
         query = f"{position} 연봉 급여 {location} 2024"
 
-        results = tavily_client.search(
-            query=query,
-            max_results=max_results,
-            search_depth="advanced"
-        )
-
-        formatted_results = []
-        for result in results.get('results', []):
-            formatted_results.append({
-                "title": result.get('title', ''),
-                "content": result.get('content', ''),
-                "url": result.get('url', ''),
-                "score": result.get('score', 0)
-            })
+        search_params = {
+            "query": query,
+            "max_results": max_results,
+            "search_depth": "advanced"
+        }
+        search_result = _tavily_search_and_format(search_params)
+        formatted_results = search_result.get("results", [])
 
         return {
             "success": True,
@@ -327,22 +321,14 @@ def search_tech_news(
     try:
         query = f"{technology} 기술 뉴스 트렌드 2024"
 
-        results = tavily_client.search(
-            query=query,
-            max_results=max_results,
-            search_depth="advanced",
-            include_domains=["techcrunch.com", "zdnet.co.kr", "bloter.net", "itworld.co.kr"]
-        )
-
-        formatted_results = []
-        for result in results.get('results', []):
-            formatted_results.append({
-                "title": result.get('title', ''),
-                "content": result.get('content', ''),
-                "url": result.get('url', ''),
-                "score": result.get('score', 0),
-                "published_date": result.get('published_date', '')
-            })
+        search_params = {
+            "query": query,
+            "max_results": max_results,
+            "search_depth": "advanced",
+            "include_domains": ["techcrunch.com", "zdnet.co.kr", "bloter.net", "itworld.co.kr"]
+        }
+        search_result = _tavily_search_and_format(search_params)
+        formatted_results = search_result.get("results", [])
 
         return {
             "success": True,
@@ -392,21 +378,13 @@ def search_startup_funding_news(
     try:
         query = "스타트업 투자 채용 개발자 2024"
 
-        results = tavily_client.search(
-            query=query,
-            max_results=max_results,
-            search_depth="advanced"
-        )
-
-        formatted_results = []
-        for result in results.get('results', []):
-            formatted_results.append({
-                "title": result.get('title', ''),
-                "content": result.get('content', ''),
-                "url": result.get('url', ''),
-                "score": result.get('score', 0),
-                "published_date": result.get('published_date', '')
-            })
+        search_params = {
+            "query": query,
+            "max_results": max_results,
+            "search_depth": "advanced"
+        }
+        search_result = _tavily_search_and_format(search_params)
+        formatted_results = search_result.get("results", [])
 
         return {
             "success": True,

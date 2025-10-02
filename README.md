@@ -130,7 +130,7 @@ source .venv/bin/activate
 cp .env.example .env
 ```
 
-`UPSTAGE_API_KEY` 값과 `TAVILY_API_KEY` 값 변경 필수
+`UPSTAGE_API_KEY` 값과 `TAVILY_API_KEY` 값, Lang Smith 관련 값 변경 필수
 
 ### 4. PostgreSQL 시작
 ```bash
@@ -211,6 +211,9 @@ run.bat
 2. 무료 API 키 발급
 3. `.env`의 `TAVILY_API_KEY`에 입력
 
+### 3. LangSmith 
+1. [LangSmith](https://smith.langchain.com/) 가입
+2. API 키 발급
 
 ## 테스트 쿼리 예시
 
