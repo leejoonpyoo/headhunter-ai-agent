@@ -191,6 +191,46 @@ def compare_technologies(tech1: str, tech2: str) -> Dict[str, Any]:
         }
 
 @tool
+def search_company_information(company_name: str, top_k: int = 5) -> Dict[str, Any]:
+    """
+    벡터 스토어에서 특정 회사의 정보를 검색하는 도구
+
+    Args:
+        company_name: 검색할 회사명
+        top_k: 반환할 최대 결과 수
+
+    Returns:
+        해당 회사의 정보
+    """
+    try:
+        # 회사명으로 검색
+        results = vector_store.search_by_category(
+            query=f"{company_name} 회사 정보",
+            category="company_info",
+            top_k=top_k
+        )
+
+        if not results:
+            return {
+                "success": False,
+                "message": f"'{company_name}'에 대한 정보를 찾을 수 없습니다."
+            }
+
+        return {
+            "success": True,
+            "company": company_name,
+            "count": len(results),
+            "information": results,
+            "message": f"'{company_name}'에 대한 정보 {len(results)}건을 찾았습니다."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "회사 정보 검색 중 오류가 발생했습니다."
+        }
+
+@tool
 def get_knowledge_base_stats() -> Dict[str, Any]:
     """지식 베이스 통계 정보 조회"""
     try:
