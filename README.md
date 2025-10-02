@@ -73,6 +73,12 @@ headhunter-ai-agent/
 │   │   ├── enhanced_workflow.py # 고급 워크플로우
 │   │   └── simple_agent.py
 │   │
+│   ├── services/
+│   │   └── company_extractor.py # 🆕 회사명 추출 및 검증
+│   │
+│   ├── ui/
+│   │   └── pdf_parser.py        # 🆕 PDF 파싱 및 JD 처리
+│   │
 │   ├── tools/
 │   │   ├── candidate_tools.py   # 인재 검색 도구 (정형)
 │   │   ├── market_tools.py      # 시장 분석 도구 (RAG)
@@ -89,7 +95,7 @@ headhunter-ai-agent/
 │   │   └── knowledge_loader.py
 │   │
 │   └── streamlit_app/
-│       ├── chatbot_app.py       # ⭐ 메인 챗봇 UI (한글)
+│       ├── chatbot_app.py       # ⭐ 메인 챗봇 UI (한글 + JD 입력)
 │       └── main.py              # 기본 UI
 │
 ├── run.py                       # ⭐ 챗봇 실행 스크립트
@@ -253,7 +259,6 @@ run.bat
 ```
 
 ## 추가 자료
-
 - [LangGraph 공식 문서](https://langchain-ai.github.io/langgraph/)
 - [Upstage Solar LLM](https://console.upstage.ai/)
 - [Tavily API](https://tavily.com/)

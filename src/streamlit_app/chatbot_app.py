@@ -12,6 +12,7 @@ sys.path.append(project_root)
 
 from src.agents.react_agent import get_react_agent
 from langchain_core.messages import HumanMessage, AIMessage
+from src.ui.pdf_parser import parse_pdf_jd, extract_company_name_with_details
 
 # 페이지 설정
 st.set_page_config(
@@ -126,6 +127,13 @@ if 'thread_id' not in st.session_state:
 if 'messages' not in st.session_state:
     st.session_state.messages = []
 
+# JD 관련 세션 상태 추가
+if 'jd_text' not in st.session_state:
+    st.session_state.jd_text = ""
+
+if 'company_name' not in st.session_state:
+    st.session_state.company_name = ""
+
 if 'agent' not in st.session_state:
     with st.spinner('AI 에이전트를 초기화하는 중...'):
         try:
@@ -140,10 +148,108 @@ with st.sidebar:
     st.markdown("### 🤖 헤드헌터 AI")
     st.markdown("---")
 
-    # 세션 정보
-    st.markdown("#### 📊 현재 세션")
-    st.caption(f"세션 ID: {st.session_state.thread_id[:8]}...")
-    st.caption(f"메시지 수: {len(st.session_state.messages)}")
+
+    # JD 업로드 섹션
+    st.markdown("#### 📄 Internal Materials Upload (Optional)")
+    uploaded_file = st.file_uploader(
+        "PDF 파일을 업로드하세요",
+        type=['pdf'],
+        help="JD가 포함된 PDF 파일을 업로드하면 회사 정보를 자동으로 추출합니다."
+    )
+    
+    if uploaded_file is not None:
+        # PDF 파싱
+        with st.spinner("PDF를 분석 중..."):
+            try:
+                jd_text = parse_pdf_jd(uploaded_file)
+                
+                if jd_text:
+                    st.session_state.jd_text = jd_text
+                    
+                    # 회사 이름 추출 및 검증 시도 (Solar API + Tavily)
+                    with st.spinner("🤖 Solar API로 회사명을 추출하고 웹 검색으로 검증하는 중..."):
+                        company_details = extract_company_name_with_details(jd_text)
+                        company_name = company_details.get("company_name")
+                        original_name = company_details.get("original_extraction")
+                        is_verified = company_details.get("is_verified", False)
+                        
+                        if company_name and company_name != "알 수 없음":
+                            st.session_state.company_name = company_name
+                            
+                            # 추출 결과 표시
+                            confidence = company_details.get("confidence", "unknown")
+                            method = company_details.get("extraction_method", "unknown")
+                            verification_method = company_details.get("verification_method", "not_verified")
+                            
+                            # 신뢰도에 따른 아이콘과 색상
+                            if is_verified and confidence == "high":
+                                st.success(f"✅ 회사명 검증 완료: **{company_name}** (웹 검색 검증됨)")
+                                if original_name and original_name != company_name:
+                                    st.info(f"📝 원본 추출: {original_name} → 최종 확인: {company_name}")
+                            elif confidence == "high":
+                                st.success(f"✅ 회사명 자동 추출: **{company_name}** (신뢰도: 높음)")
+                            elif confidence == "medium":
+                                st.info(f"ℹ️ 회사명 자동 추출: **{company_name}** (신뢰도: 보통)")
+                            else:
+                                st.warning(f"⚠️ 회사명 자동 추출: **{company_name}** (신뢰도: 낮음)")
+                            
+                            # 추출 및 검증 방법 표시
+                            method_map = {
+                                "explicit": "명시적 추출",
+                                "inferred": "추론적 추출", 
+                                "not_found": "찾을 수 없음",
+                                "web_search_verified": "웹 검색 검증됨",
+                                "web_search_partial": "웹 검색 부분 확인",
+                                "not_verified": "검증되지 않음"
+                            }
+                            
+                            st.caption(f"추출 방법: {method_map.get(method, method)}")
+                            if verification_method != "not_verified":
+                                st.caption(f"검증 방법: {method_map.get(verification_method, verification_method)}")
+                            
+                            # 분석 결과 표시 (있는 경우)
+                            if "analysis" in company_details:
+                                with st.expander("🔍 회사명 검증 분석 결과"):
+                                    st.text(company_details["analysis"])
+                            
+                        else:
+                            st.warning("⚠️ 회사명을 자동으로 추출할 수 없습니다.")
+                            if "error" in company_details:
+                                st.caption(f"오류: {company_details['error']}")
+                            if "verification_error" in company_details:
+                                st.caption(f"검증 오류: {company_details['verification_error']}")
+                    
+                    # JD 미리보기
+                    with st.expander("📋 JD 미리보기"):
+                        st.text_area("JD 내용", jd_text, height=200, disabled=True)
+                else:
+                    st.error("❌ PDF 파싱에 실패했습니다.")
+                    st.info("💡 **해결 방법:**\n"
+                           "- PDF가 텍스트 기반인지 확인하세요\n"
+                           "- 이미지로 스캔된 PDF는 OCR이 필요합니다\n"
+                           "- 다른 PDF 파일로 시도해보세요\n"
+                           "- JD 내용을 직접 입력해보세요")
+            except Exception as e:
+                st.error(f"❌ PDF 처리 중 오류가 발생했습니다: {str(e)}")
+                st.info("💡 **해결 방법:**\n"
+                       "- PDF 파일이 손상되지 않았는지 확인하세요\n"
+                       "- 파일 크기가 200MB 이하인지 확인하세요\n"
+                       "- JD 내용을 직접 입력해보세요")
+    
+    st.markdown("---")
+    
+    # JD 텍스트 직접 입력
+    st.markdown("#### 📝 JD Input (Optional)")
+    jd_input = st.text_area(
+        "JD 내용",
+        value=st.session_state.jd_text,
+        height=150,
+        placeholder="JD 내용을 직접 입력하세요...",
+        help="PDF 업로드 대신 JD 내용을 직접 입력할 수 있습니다."
+    )
+    
+    if jd_input != st.session_state.jd_text:
+        st.session_state.jd_text = jd_input
 
     st.markdown("---")
 
